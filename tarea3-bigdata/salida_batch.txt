@@ -1,0 +1,217 @@
+
+========================================================================
+1. CARGA DEL DATASET DESDE HDFS
+========================================================================
+Filas cargadas: 639,041
+Columnas: 14
+Particiones del DataFrame: 4
+root
+ |-- pais: string (nullable = true)
+ |-- iso_pais: string (nullable = true)
+ |-- ciudad_residencia: string (nullable = true)
+ |-- oficina_consular: string (nullable = true)
+ |-- edad: string (nullable = true)
+ |-- area_conocimiento: string (nullable = true)
+ |-- nivel_academico: string (nullable = true)
+ |-- estado_civil: string (nullable = true)
+ |-- sexo: string (nullable = true)
+ |-- etnia: string (nullable = true)
+ |-- ciudad_nacimiento: string (nullable = true)
+ |-- localizacion: string (nullable = true)
+ |-- fecha_registro: string (nullable = true)
+ |-- cantidad: string (nullable = true)
+
++----------+--------+-----------------+----------------+----+--------------------------------------------+---------------+------------+---------+-------+------------------------------+----------------------+--------------+--------+
+|pais      |iso_pais|ciudad_residencia|oficina_consular|edad|area_conocimiento                           |nivel_academico|estado_civil|sexo     |etnia  |ciudad_nacimiento             |localizacion          |fecha_registro|cantidad|
++----------+--------+-----------------+----------------+----+--------------------------------------------+---------------+------------+---------+-------+------------------------------+----------------------+--------------+--------+
+|AFGANISTAN|AFG     |BADAKHSHAN/BUCHI |C. NUEVA DELHI  |37  |ECONOMÍA, ADMINISTRACIÓN CONTADURIA Y AFINES|SIN INFORMACIÓN|DESCONOCIDO |FEMENINO |OTRO   |COLOMBIA/SANTANDER/BUCARAMANGA|(33.93911, 67.709953) |2018-10       |1       |
+|ALBANIA   |ALB     |VLORE/ARMENI     |C. ROMA         |32  |CIENCIAS DE LA EDUCACIÓN                    |SIN INFORMACIÓN|DESCONOCIDO |MASCULINO|OTRO   |COLOMBIA/QUINDIO/ARMENIA      |(41.153332, 20.168331)|2018-12       |1       |
+|ALBANIA   |ALB     |VLORE/VLORE      |C. ROMA         |39  |NINGUNA                                     |BACHILLERATO   |CASADO      |MASCULINO|NINGUNA|VENEZUELA/CARABOBO/VALENCIA   |(41.153332, 20.168331)|2014-08       |1       |
+|ALEMANIA  |DEU     |BERLIN/BERLIN    |C. BERLIN       |25  |CIENCIAS SOCIALES Y HUMANAS                 |SIN INFORMACIÓN|SOLTERO     |FEMENINO |OTRO   |COLOMBIA/CUNDINAMARCA/BOGOTA  |(51.165691, 10.451526)|2021-11       |1       |
+|ALEMANIA  |DEU     |BERLIN/BERLIN    |C. BERLIN       |25  |CIENCIAS SOCIALES, PERIODISMO E INFORMACIÓN |MAESTRÍA       |CASADO      |FEMENINO |NINGUNA|(NO REGISTRA)                 |(51.165691, 10.451526)|2025-11       |1       |
++----------+--------+-----------------+----------------+----+--------------------------------------------+---------------+------------+---------+-------+------------------------------+----------------------+--------------+--------+
+only showing top 5 rows
+
+
+========================================================================
+2. LIMPIEZA Y TRANSFORMACIÓN
+========================================================================
+Filas con fecha inválida (año 1900) descartadas: 156
+Filas después de la limpieza: 638,885
+Personas representadas (suma de 'cantidad'): 642,834
+
+Nulos por columna (solo las que tienen):
+{'localizacion': 6, 'latitud': 6, 'longitud': 6, 'depto_nacimiento': 52463, 'municipio_nacimiento': 52463}
+root
+ |-- pais: string (nullable = true)
+ |-- iso_pais: string (nullable = true)
+ |-- ciudad_residencia: string (nullable = true)
+ |-- oficina_consular: string (nullable = true)
+ |-- edad: integer (nullable = true)
+ |-- area_conocimiento: string (nullable = true)
+ |-- nivel_academico: string (nullable = true)
+ |-- estado_civil: string (nullable = true)
+ |-- sexo: string (nullable = true)
+ |-- etnia: string (nullable = true)
+ |-- ciudad_nacimiento: string (nullable = true)
+ |-- localizacion: string (nullable = true)
+ |-- fecha_registro: string (nullable = true)
+ |-- cantidad: integer (nullable = true)
+ |-- fecha: date (nullable = true)
+ |-- anio: integer (nullable = true)
+ |-- mes: integer (nullable = true)
+ |-- latitud: double (nullable = true)
+ |-- longitud: double (nullable = true)
+ |-- pais_nacimiento: string (nullable = true)
+ |-- depto_nacimiento: string (nullable = true)
+ |-- municipio_nacimiento: string (nullable = true)
+ |-- grupo_edad: string (nullable = false)
+ |-- nivel_agrupado: string (nullable = false)
+
++----------+----+---+----+----------+---------------+------------------------+---------+---------+---------------+----------------+--------+
+|pais      |anio|mes|edad|grupo_edad|nivel_academico|nivel_agrupado          |latitud  |longitud |pais_nacimiento|depto_nacimiento|cantidad|
++----------+----+---+----+----------+---------------+------------------------+---------+---------+---------------+----------------+--------+
+|AFGANISTAN|2018|10 |37  |35-40     |SIN DATO       |SIN DATO                |33.93911 |67.709953|COLOMBIA       |SANTANDER       |1       |
+|ALBANIA   |2018|12 |32  |30-34     |SIN DATO       |SIN DATO                |41.153332|20.168331|COLOMBIA       |QUINDIO         |1       |
+|ALBANIA   |2014|8  |39  |35-40     |BACHILLERATO   |BÁSICO                  |41.153332|20.168331|VENEZUELA      |CARABOBO        |1       |
+|ALEMANIA  |2021|11 |25  |25-29     |SIN DATO       |SIN DATO                |51.165691|10.451526|COLOMBIA       |CUNDINAMARCA    |1       |
+|ALEMANIA  |2025|11 |25  |25-29     |MAESTRÍA       |UNIVERSITARIO / POSGRADO|51.165691|10.451526|SIN DATO       |NULL            |1       |
++----------+----+---+----+----------+---------------+------------------------+---------+---------+---------------+----------------+--------+
+only showing top 5 rows
+
+
+========================================================================
+3. ANÁLISIS CON RDD: personas por país (reduceByKey)
+========================================================================
+Top 5 países (RDD, acción takeOrdered):
+  ESPAÑA                  212,243
+  ESTADOS UNIDOS          179,747
+  ECUADOR                  37,923
+  CHILE                    25,880
+  AUSTRALIA                20,075
+
+========================================================================
+4. ANÁLISIS EXPLORATORIO CON DATAFRAMES
+========================================================================
+
+4.1 Personas inscritas por año (2026 es un año parcial)
++----+--------+
+|anio|personas|
++----+--------+
+|2013|    9729|
+|2014|   19896|
+|2015|   28196|
+|2016|   26276|
+|2017|   32903|
+|2018|   37501|
+|2019|   38228|
+|2020|   26876|
+|2021|   42040|
+|2022|   68904|
+|2023|   83272|
+|2024|   80590|
+|2025|   92315|
+|2026|   56108|
++----+--------+
+
+4.2 Top 10 países de residencia
++--------------+--------+
+|pais          |personas|
++--------------+--------+
+|ESPAÑA        |212243  |
+|ESTADOS UNIDOS|179747  |
+|ECUADOR       |37923   |
+|CHILE         |25880   |
+|AUSTRALIA     |20075   |
+|CANADA        |19621   |
+|ARGENTINA     |19568   |
+|BRASIL        |16919   |
+|MEXICO        |11464   |
+|FRANCIA       |11363   |
++--------------+--------+
+
+4.3 Personas por sexo
++----------+--------+
+|      sexo|personas|
++----------+--------+
+|  FEMENINO|  335846|
+| MASCULINO|  306783|
+|  SIN DATO|     196|
+|NO_BINARIO|       9|
++----------+--------+
+
+Personas por grupo de edad
++----------+--------+
+|grupo_edad|personas|
++----------+--------+
+|     25-29|  147840|
+|     30-34|  222194|
+|     35-40|  272800|
++----------+--------+
+
+4.4 Nivel académico
++-------------------+--------+
+|nivel_academico    |personas|
++-------------------+--------+
+|SIN DATO           |211049  |
+|BACHILLERATO       |186433  |
+|PROFESIONAL        |109481  |
+|TÉCNICA PROFESIONAL|46049   |
+|MAESTRÍA           |25094   |
+|TECNOLÓGICA        |24314   |
+|PRIMARIA           |14915   |
+|ESPECIALIZACIÓN    |11484   |
+|NINGUNO            |10483   |
+|DOCTORADO          |3515    |
+|UNIVERSITARIA      |17      |
++-------------------+--------+
+
+4.5 Top 10 áreas de conocimiento (sin 'NINGUNA' ni 'SIN DATO')
++--------------------------------------------+--------+
+|area_conocimiento                           |personas|
++--------------------------------------------+--------+
+|ECONOMÍA, ADMINISTRACIÓN CONTADURIA Y AFINES|57309   |
+|INGENIERÍA, ARQUITECTURA Y AFINES           |46806   |
+|CIENCIAS DE LA SALUD                        |31781   |
+|CIENCIAS SOCIALES Y HUMANAS                 |31628   |
+|ADMINISTRACIÓN DE EMPRESAS Y DERECHO        |25351   |
+|INGENIERÍA, INDUSTRIA Y CONSTRUCCIÓN        |18931   |
+|BELLAS ARTES                                |15398   |
+|SALUD Y BIENESTAR                           |14810   |
+|CIENCIAS SOCIALES, PERIODISMO E INFORMACIÓN |9811    |
+|CIENCIAS DE LA EDUCACIÓN                    |9480    |
++--------------------------------------------+--------+
+
+4.6 % con formación universitaria o posgrado en los 10 países principales
++--------------+--------+--------------+-----------------+
+|pais          |con_dato|universitarios|pct_universitario|
++--------------+--------+--------------+-----------------+
+|AUSTRALIA     |15463   |12025         |77.8             |
+|FRANCIA       |7827    |5605          |71.6             |
+|CANADA        |12022   |7071          |58.8             |
+|MEXICO        |6693    |3881          |58.0             |
+|ARGENTINA     |11678   |6116          |52.4             |
+|ESTADOS UNIDOS|131623  |47634         |36.2             |
+|BRASIL        |9408    |2984          |31.7             |
+|ESPAÑA        |148488  |31420         |21.2             |
+|CHILE         |13769   |2860          |20.8             |
+|ECUADOR       |20218   |3067          |15.2             |
++--------------+--------+--------------+-----------------+
+
+
+========================================================================
+5. GRÁFICAS
+========================================================================
+Gráfica guardada: /home/vboxuser/graficas_tarea3/1_inscritos_por_anio.png
+Gráfica guardada: /home/vboxuser/graficas_tarea3/2_top10_paises.png
+Gráfica guardada: /home/vboxuser/graficas_tarea3/3_nivel_academico.png
+Gráfica guardada: /home/vboxuser/graficas_tarea3/4_top10_areas.png
+Gráfica guardada: /home/vboxuser/graficas_tarea3/5_pct_universitario_pais.png
+
+========================================================================
+6. GUARDADO DEL DATASET LIMPIO EN HDFS (PARQUET)
+========================================================================
+Filas guardadas y releídas desde Parquet: 638,885
+Coincide con el DataFrame limpio: True
+
+Tiempo total: 105.8 segundos
